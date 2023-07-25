@@ -8,7 +8,9 @@ import {
   contestController,
   rankingController,
 } from "./src/controllers";
-import { getTaskStatus } from "./src/tools/statusManager";
+import { createTaskStatus, getTaskStatus } from "./src/tools/statusManager";
+
+// @TODO: FIX startBrowser
 
 const port = process.env.PORT || 8080;
 
@@ -36,13 +38,17 @@ app.get("/status/:taskId", async (req, res) => {
   }
 });
 
-app.post("/contest", async (req, res) => {
+// recebe body com accountId e credenciais e retorna subcontas dessa conta
+app.post("/subaccounts", async (req, res) => {
   const { accountId, credentials } = req.body;
   if (!accountId) return res.status(400).json({ error: "Missing params" });
   if (!credentials.email || !credentials.password)
     return res.status(403).json({ error: "Missing credentials" });
+
   const { browser, page } = await startBrowser(false);
+
   const taskId = randomUUID();
+  createTaskStatus(taskId, "Procurando subcontas");
 
   loginController(credentials, page, taskId).then(() => {
     contestController({ accountId }, page, taskId).then(() => {
@@ -51,6 +57,8 @@ app.post("/contest", async (req, res) => {
   });
   res.status(200).send({ taskId });
 });
+
+app.post("/contest", async (req, res) => {});
 
 function isValidProducts(products: any) {
   if (!products) throw new Error("Missing products");

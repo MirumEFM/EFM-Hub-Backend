@@ -8,7 +8,6 @@ export async function contestController(
   taskId: string
 ) {
   const { accountId } = data;
-  createTaskStatus(taskId, "Procurando subcontas...");
   try {
     const subAccounts = await getSubAccounts(page, accountId);
     const urls = subAccounts.map(
