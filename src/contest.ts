@@ -54,21 +54,35 @@ function logIn(
   });
 }
 
-function getSubAccountIssuesURL(): string {
+function getSubAccountIssuesURL(): string[] {
+  const issues = [
+    "Medicamentos controlados e vendidos sem receita",
+    "Produtos farmacêuticos e suplementos proibidos",
+    "Documentos falsificados",
+  ];
+
   return Array.from(document.querySelectorAll("issue-label"))
     .map((el, i) => {
       try {
         const anchor = el.parentNode?.parentNode?.parentNode?.children[1]
           .children[0].children[1] as HTMLAnchorElement;
         return {
-          nome: el.children[0]?.children[1].textContent?.split("\n")[0],
+          nome: el.children[0]?.children[1]?.textContent
+            ?.split("\n")[0]
+            .replace("help_outline", ""),
           url: anchor.href,
         };
       } catch (err) {}
     })
     .filter((v) => v)
-    .find((el) => el?.nome?.includes("Violação das políticas do Google"))
-    ?.url as string;
+    .filter((v) => {
+      let res = [];
+      for (const issue of issues) {
+        res.push(v?.nome?.includes(issue));
+      }
+      return res.includes(true);
+    })
+    .map((el) => el?.url) as string[];
 }
 
 type SubAccountType = {
@@ -95,24 +109,28 @@ async function getSubAccounts(
   });
   await page.waitForNetworkIdle();
 
-  const url = await page.evaluate(getSubAccountIssuesURL);
-  await page.goto(url);
-  await page.waitForSelector(
-    "a[activityname='ClickMcaItemIssueSubAccountName']"
-  );
+  const urls = await page.evaluate(getSubAccountIssuesURL);
+  console.log(urls);
+  let subAccounts: any[] = [];
+  for (const url of urls) {
+    page.goto(url);
+    await page.waitForSelector(
+      "a[activityname='ClickMcaItemIssueSubAccountName']"
+    );
 
-  const subAccounts = await page.evaluate(() => {
-    return Array.from(
-      document.querySelectorAll(
-        "a[activityname='ClickMcaItemIssueSubAccountName']"
-      )
-    ).map((i) => {
-      return {
-        nome: i.textContent as string,
-        id: i.getAttribute("href")?.split("=")[1].split("&")[0] as string,
-      };
+    subAccounts = await page.evaluate(() => {
+      return Array.from(
+        document.querySelectorAll(
+          "a[activityname='ClickMcaItemIssueSubAccountName']"
+        )
+      ).map((i) => {
+        return {
+          nome: i.textContent as string,
+          id: i.getAttribute("href")?.split("=")[1].split("&")[0] as string,
+        };
+      });
     });
-  });
+  }
 
   return subAccounts;
 }

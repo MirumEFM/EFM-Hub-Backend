@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 
 import { randomUUID } from "crypto";
 import { startBrowser } from "./src/libs/puppeteer";
@@ -16,6 +17,7 @@ const port = process.env.PORT || 8080;
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
@@ -40,6 +42,7 @@ app.get("/status/:taskId", async (req, res) => {
 
 // recebe body com accountId e credenciais e retorna subcontas dessa conta
 app.post("/subaccounts", async (req, res) => {
+  console.log("got request");
   const { accountId, credentials } = req.body;
   if (!accountId) return res.status(400).json({ error: "Missing params" });
   if (!credentials.email || !credentials.password)
