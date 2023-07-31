@@ -1,5 +1,5 @@
 import { Page } from "puppeteer";
-import { getIssues, getSubAccounts } from "../contest";
+import { getSubAccounts } from "../contest";
 import { createTaskStatus, updateTaskStatus } from "../tools/statusManager";
 
 export async function contestController(
@@ -9,16 +9,22 @@ export async function contestController(
 ) {
   const { accountId } = data;
   try {
+    updateTaskStatus(taskId, {
+      message: "Procurando subcontas",
+      progress: 0,
+    });
     const subAccounts = await getSubAccounts(page, accountId);
-    const urls = subAccounts.map(
-      (subAccount) =>
-        `https://merchants.google.com/mc/products/diagnostics?a=${subAccount.id}&tab=item_issues`
-    );
+
+    const urls = subAccounts.map((subAccount) => {
+      return {
+        url: `https://merchants.google.com/mc/products/diagnostics?a=${subAccount.id}&tab=item_issues`,
+        issue: subAccount.issue,
+      };
+    });
 
     updateTaskStatus(taskId, {
-      status: "pending",
       message: "Esperando por CSV",
-      progress: 100,
+      progress: 70,
       data: urls,
     });
   } catch (err) {

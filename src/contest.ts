@@ -54,7 +54,7 @@ function logIn(
   });
 }
 
-function getSubAccountIssuesURL(): string[] {
+function getSubAccountIssuesURL(): { url: string; type: string }[] {
   const issues = [
     "Medicamentos controlados e vendidos sem receita",
     "Produtos farmacêuticos e suplementos proibidos",
@@ -71,6 +71,7 @@ function getSubAccountIssuesURL(): string[] {
             ?.split("\n")[0]
             .replace("help_outline", ""),
           url: anchor.href,
+          type: "",
         };
       } catch (err) {}
     })
@@ -78,16 +79,22 @@ function getSubAccountIssuesURL(): string[] {
     .filter((v) => {
       let res = [];
       for (const issue of issues) {
-        res.push(v?.nome?.includes(issue));
+        if (v?.nome?.includes(issue)) {
+          res.push(true);
+          v.type = issue;
+        }
       }
       return res.includes(true);
     })
-    .map((el) => el?.url) as string[];
+    .map((el) => {
+      return { url: el?.url, type: el?.type };
+    }) as { url: string; type: string }[];
 }
 
 type SubAccountType = {
   nome: string;
   id: string;
+  issue: string;
 };
 
 /* Returns an array of subAccounts of given account */
@@ -109,43 +116,38 @@ async function getSubAccounts(
   });
   await page.waitForNetworkIdle();
 
-  const urls = await page.evaluate(getSubAccountIssuesURL);
-  console.log(urls);
-  let subAccounts: any[] = [];
-  for (const url of urls) {
-    page.goto(url);
+  const subAccountIssues = await page.evaluate(getSubAccountIssuesURL);
+  console.log(subAccountIssues);
+  const subAccounts: { nome: string; id: string; issue: string }[][] = [];
+  for (const subAccountIssue of subAccountIssues) {
+    page.goto(subAccountIssue.url);
     await page.waitForSelector(
       "a[activityname='ClickMcaItemIssueSubAccountName']"
     );
 
-    subAccounts = await page.evaluate(() => {
-      return Array.from(
-        document.querySelectorAll(
-          "a[activityname='ClickMcaItemIssueSubAccountName']"
-        )
-      ).map((i) => {
-        return {
-          nome: i.textContent as string,
-          id: i.getAttribute("href")?.split("=")[1].split("&")[0] as string,
-        };
+    let items: { nome: string; id: string; issue: string }[] =
+      await page.evaluate(() => {
+        return Array.from(
+          document.querySelectorAll(
+            "a[activityname='ClickMcaItemIssueSubAccountName']"
+          )
+        ).map((i) => {
+          return {
+            nome: i.textContent as string,
+            id: i.getAttribute("href")?.split("=")[1].split("&")[0] as string,
+            issue: "",
+          };
+        });
       });
+
+    items.forEach((i) => {
+      i.issue = subAccountIssue.type;
     });
+
+    subAccounts.push(items);
   }
 
-  return subAccounts;
+  return subAccounts.flatMap((el) => el);
 }
 
-/** Returns list of flagged products */
-async function getIssues(
-  page: Page,
-  subAccounts: SubAccountType[]
-): Promise<string[]> {
-  const subAccount = subAccounts[0];
-  await page.goto(
-    `https://merchants.google.com/mc/products/diagnostics?a=${subAccount.id}&tab=item_issues`
-  );
-
-  return [""];
-}
-
-export { logIn, getSubAccounts, getIssues };
+export { logIn, getSubAccounts };

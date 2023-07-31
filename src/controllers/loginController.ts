@@ -35,13 +35,14 @@ export async function loginController(
         }
       });
     }
-    await page.waitForNavigation();
+
     updateTaskStatus("login", {
       status: "finished",
       message: `Login finalizado!`,
       progress: 100,
-      data: null,
     });
+
+    await page.waitForNavigation();
   } catch (err: any) {
     console.log("Error loging in:", err);
     updateTaskStatus("login", {

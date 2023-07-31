@@ -21,10 +21,7 @@ export async function createTaskStatus(
   };
 }
 
-export async function updateTaskStatus(
-  taskId: string,
-  data: Partial<TaskStatus>
-): Promise<void> {
+export function updateTaskStatus(taskId: string, data: Partial<TaskStatus>) {
   status[taskId] = {
     ...status[taskId],
     ...data,
