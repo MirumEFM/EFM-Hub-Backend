@@ -9,7 +9,11 @@ import {
   contestController,
   rankingController,
 } from "./src/controllers";
-import { createTaskStatus, getTaskStatus } from "./src/tools/statusManager";
+import {
+  createTaskStatus,
+  getTaskStatus,
+  updateTaskStatus,
+} from "./src/tools/statusManager";
 
 // @TODO: FIX startBrowser
 
@@ -42,7 +46,6 @@ app.get("/status/:taskId", async (req, res) => {
 
 // recebe body com accountId e credenciais e retorna subcontas dessa conta
 app.post("/subaccounts", async (req, res) => {
-  console.log("got request");
   const { accountId, credentials } = req.body;
   if (!accountId) return res.status(400).json({ error: "Missing params" });
   if (!credentials.email || !credentials.password)
@@ -53,11 +56,19 @@ app.post("/subaccounts", async (req, res) => {
   const taskId = randomUUID();
   createTaskStatus(taskId, "Procurando subcontas");
 
-  loginController(credentials, page, taskId).then(() => {
-    contestController({ accountId }, page, taskId).then(() => {
-      browser.close();
+  loginController(credentials, page, taskId)
+    .then(() => {
+      contestController({ accountId }, page, taskId).then(() => {
+        browser.close();
+      });
+    })
+    .catch((err) => {
+      updateTaskStatus(taskId, {
+        status: "error",
+        message: err.message,
+        progress: 100,
+      });
     });
-  });
   res.status(200).send({ taskId });
 });
 
@@ -78,6 +89,8 @@ app.post("/ranking", async (req, res) => {
 
     const { browser, page } = await startBrowser();
     const taskId = randomUUID();
+
+    createTaskStatus(taskId, "Iniciando busca...");
 
     rankingController(products, page, taskId).then(() => {
       browser.close();

@@ -13,10 +13,8 @@ export async function createTaskStatus(
   status[taskId] = {
     createdAt: new Date(),
     status: "pending",
-    progress: {
-      progress: 0,
-      message: initialMessage,
-    },
+    progress: 0,
+    message: initialMessage,
     data: null,
   };
 }

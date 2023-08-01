@@ -1,5 +1,5 @@
 import { Page } from "puppeteer";
-import userAgent from "user-agents";
+import UserAgent from "user-agents";
 import { createTaskStatus, updateTaskStatus } from "../tools/statusManager";
 
 export async function rankingController(
@@ -8,24 +8,14 @@ export async function rankingController(
   taskId: string
 ) {
   const productsResult: Result[] = [];
-  createTaskStatus(taskId, "Iniciando busca...");
   try {
     for (const product of data) {
-      let agent = new userAgent().random().toString();
-      const agentVersion = parseInt(
-        agent.split(" ").splice(-2)[0].split("/")[1].split(".")[0]
-      );
-      while (
-        agent.includes("Android") ||
-        agent.includes("iPhone") ||
-        agent.includes("iPad") ||
-        agentVersion < 114
-      ) {
-        agent = new userAgent().random().toString();
-      }
+      let userAgent = new UserAgent({
+        deviceCategory: "desktop",
+        platform: "Win32",
+      }).toString();
 
-      console.log(agent);
-      await page.setUserAgent(agent);
+      await page.setUserAgent(userAgent);
       await page.goto(
         `https://www.google.com/search?q=${encodeURI(product.name)}&tbm=shop`
       );
@@ -66,11 +56,11 @@ export async function rankingController(
               };
             });
         });
-
-        result = products.find(
-          (p) =>
-            p.name.includes(product.name) && p.store.includes(product.store)
-        );
+        result = products.find((p) => {
+          return (
+            p.name.trim().includes(product.name.trim()) && p.store.trim().includes(product.store.trim())
+          );
+        });
       }
 
       if (result) {
