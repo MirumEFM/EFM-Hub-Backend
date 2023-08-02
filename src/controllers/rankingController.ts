@@ -1,6 +1,6 @@
 import { Page } from "puppeteer";
 import UserAgent from "user-agents";
-import { createTaskStatus, updateTaskStatus } from "../tools/statusManager";
+import { updateTaskStatus } from "../utils/statusManager";
 
 export async function rankingController(
   data: ProductType[],
@@ -10,6 +10,7 @@ export async function rankingController(
   const productsResult: Result[] = [];
   try {
     for (const product of data) {
+      // Criando apenas user-agents desktop no Windows por consinstência da interface.
       let userAgent = new UserAgent({
         deviceCategory: "desktop",
         platform: "Win32",
@@ -58,7 +59,8 @@ export async function rankingController(
         });
         result = products.find((p) => {
           return (
-            p.name.trim().includes(product.name.trim()) && p.store.trim().includes(product.store.trim())
+            p.name.trim().includes(product.name.trim()) &&
+            p.store.trim().includes(product.store.trim())
           );
         });
       }

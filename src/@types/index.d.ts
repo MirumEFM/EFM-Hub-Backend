@@ -25,3 +25,16 @@ type TaskStatus = {
   progress: number;
   data: any;
 };
+
+const issues = [
+  "Medicamentos controlados e vendidos sem receita",
+  "Produtos farmacêuticos e suplementos proibidos",
+  "Documentos falsificados",
+] as const;
+
+type IssueType = (typeof issues)[number];
+
+type Issue = {
+  url: string;
+  type: IssueType;
+};

@@ -1,33 +1,30 @@
+import { updateTaskStatus } from "../utils/statusManager";
 import { Page } from "puppeteer";
-import { getSubAccounts } from "../contest";
-import { createTaskStatus, updateTaskStatus } from "../tools/statusManager";
+
+async function contest(issue: Issue) {}
 
 export async function contestController(
-  data: { accountId: string },
+  data: {
+    subAccounts: Issue[];
+  },
   page: Page,
   taskId: string
 ) {
-  const { accountId } = data;
-  try {
-    updateTaskStatus(taskId, {
-      message: "Procurando subcontas",
-      progress: 0,
-    });
-    const subAccounts = await getSubAccounts(page, accountId);
+  updateTaskStatus(taskId, {
+    message: "Iniciando contestação de produtos",
+  });
 
-    const urls = subAccounts.map((subAccount) => {
-      return {
-        url: `https://merchants.google.com/mc/products/diagnostics?a=${subAccount.id}&tab=item_issues`,
-        issue: subAccount.issue,
-      };
-    });
-
+  for (const issue of data.subAccounts) {
+    const currentIndex = data.subAccounts.indexOf(issue);
     updateTaskStatus(taskId, {
-      message: "Esperando por CSV",
-      progress: 70,
-      data: urls,
+      message: `Contestando produto ${currentIndex}/${data.subAccounts.length}`,
+      progress: (currentIndex / data.subAccounts.length) * 100,
     });
-  } catch (err) {
-    console.log("Error contesting products:", err);
+    await page.goto(issue.url);
+    await contest(issue);
   }
+
+  updateTaskStatus(taskId, {
+    message: "Contestação finalizada",
+  });
 }

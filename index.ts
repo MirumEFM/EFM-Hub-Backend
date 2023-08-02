@@ -6,14 +6,14 @@ import { startBrowser } from "./src/libs/puppeteer";
 
 import {
   loginController,
-  contestController,
+  subaccountController,
   rankingController,
 } from "./src/controllers";
 import {
   createTaskStatus,
   getTaskStatus,
   updateTaskStatus,
-} from "./src/tools/statusManager";
+} from "./src/utils/statusManager";
 
 // @TODO: FIX startBrowser
 
@@ -58,7 +58,7 @@ app.post("/subaccounts", async (req, res) => {
 
   loginController(credentials, page, taskId)
     .then(() => {
-      contestController({ accountId }, page, taskId).then(() => {
+      subaccountController({ accountId }, page, taskId).then(() => {
         browser.close();
       });
     })
@@ -85,8 +85,6 @@ function isValidProducts(products: any) {
 app.post("/ranking", async (req, res) => {
   try {
     const { products } = req.body;
-    isValidProducts(products);
-
     const { browser, page } = await startBrowser();
     const taskId = randomUUID();
 
@@ -98,6 +96,7 @@ app.post("/ranking", async (req, res) => {
 
     res.status(200).json({ taskId });
   } catch (err: any) {
+    console.log(err.message);
     res.status(400).json({ error: err.message });
   }
 });
