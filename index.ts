@@ -6,7 +6,7 @@ import { startBrowser } from "./src/libs/puppeteer";
 
 import {
   loginController,
-  subaccountController,
+  subAccountController,
   rankingController,
 } from "./src/controllers";
 import {
@@ -58,7 +58,7 @@ app.post("/subaccounts", async (req, res) => {
 
   loginController(credentials, page, taskId)
     .then(() => {
-      subaccountController({ accountId }, page, taskId).then(() => {
+      subAccountController({ accountId }, page, taskId).then(() => {
         browser.close();
       });
     })

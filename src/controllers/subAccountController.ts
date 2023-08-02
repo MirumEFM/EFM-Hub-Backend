@@ -1,7 +1,7 @@
 import { Page } from "puppeteer";
 import { updateTaskStatus } from "../utils/statusManager";
 
-export async function subaccountController(
+export async function subAccountController(
   data: { accountId: string },
   page: Page,
   taskId: string
