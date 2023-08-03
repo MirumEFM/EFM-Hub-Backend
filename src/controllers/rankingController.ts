@@ -7,6 +7,7 @@ export async function rankingController(
   page: Page,
   taskId: string
 ) {
+  let currentIndex = 0;
   const productsResult: Result[] = [];
   try {
     for (const product of data) {
@@ -79,6 +80,7 @@ export async function rankingController(
         message: `${productsResult.length}/${data.length} produtos encontrados`,
         data: productsResult,
       });
+      currentIndex++
     }
     updateTaskStatus(taskId, {
       status: "finished",
@@ -90,7 +92,7 @@ export async function rankingController(
     console.log(err);
     updateTaskStatus(taskId, {
       status: "error",
-      message: `Erro ao buscar posição de ${data[0].name}`,
+      message: `Erro ao buscar posição de ${data[currentIndex].name}`,
       progress: 100,
       data: productsResult,
     });

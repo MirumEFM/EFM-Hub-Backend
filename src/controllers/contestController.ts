@@ -1,42 +1,6 @@
 import { updateTaskStatus } from "../utils/statusManager";
 import { Page } from "puppeteer";
 
-function getItemURL(subAccountId: string, sku: string) {
-  return `https://merchants.google.com/mc/items/details?a=${subAccountId}6&offerId=${sku}&language=pt&channel=0&feedLabel=BR&hl=pt`;
-}
-
-async function contest(page: Page, issue: IssueType): Promise<void> {
-  // Primeiro botão "Pedir análise"
-  const button = document.querySelector(
-    ".mcn-button-touch-target"
-  ) as HTMLElement;
-  button.click();
-
-  if (issue === "Documentos falsificados") {
-    // Caso seja popup de múltipla escolha
-    const options = Array.from(
-      document.querySelector("material-radio-group")?.children as HTMLCollection
-    );
-    const btn = options.find((el) =>
-      el.textContent?.includes("Meu produto cumpre os requisitos da política")
-    ) as HTMLElement;
-    btn?.click();
-  }
-
-  await page.evaluate(() => {
-    // Segundo botão "Pedir análise" (confirmação)
-    const popupButtons = document
-      .querySelector("material-dialog")
-      ?.querySelectorAll("span") as NodeListOf<HTMLSpanElement>;
-    const btn = Array.from(popupButtons).find((btn) =>
-      btn.textContent?.includes("Pedir análise")
-    );
-    btn?.click();
-  });
-
-  return;
-}
-
 export async function contestController(
   data: {
     issue: IssueType;
@@ -64,5 +28,42 @@ export async function contestController(
 
   updateTaskStatus(taskId, {
     message: "Contestação finalizada",
+  });
+}
+
+function getItemURL(subAccountId: string, sku: string) {
+  return `https://merchants.google.com/mc/items/details?a=${subAccountId}6&offerId=${sku}&language=pt&channel=0&feedLabel=BR&hl=pt`;
+}
+
+async function contest(page: Page, issue: IssueType): Promise<void> {
+  await page.evaluate(async () => {
+    // Primeiro botão "Pedir análise"
+    const button = document.querySelector(
+      ".mcn-button-touch-target"
+    ) as HTMLElement;
+    button.click();
+
+    if (issue === "Documentos falsificados") {
+      // Caso seja popup de múltipla escolha
+      const options = Array.from(
+        document.querySelector("material-radio-group")
+          ?.children as HTMLCollection
+      );
+      const btn = options.find((el) =>
+        el.textContent?.includes("Meu produto cumpre os requisitos da política")
+      ) as HTMLElement;
+      btn?.click();
+    }
+
+    await page.evaluate(() => {
+      // Segundo botão "Pedir análise" (confirmação)
+      const popupButtons = document
+        .querySelector("material-dialog")
+        ?.querySelectorAll("span") as NodeListOf<HTMLSpanElement>;
+      const btn = Array.from(popupButtons).find((btn) =>
+        btn.textContent?.includes("Pedir análise")
+      );
+      btn?.click();
+    });
   });
 }

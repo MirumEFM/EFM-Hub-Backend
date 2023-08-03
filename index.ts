@@ -8,6 +8,7 @@ import {
   loginController,
   subAccountController,
   rankingController,
+  contestController,
 } from "./src/controllers";
 import {
   createTaskStatus,
@@ -72,7 +73,43 @@ app.post("/subaccounts", async (req, res) => {
   res.status(200).send({ taskId });
 });
 
-app.post("/contest", async (req, res) => {});
+app.post("/contest", async (req, res) => {
+  const { issues, credentials } = req.body as {
+    issues:
+      | undefined
+      | { issue: IssueType; subAccountId: string; sku: string }[];
+    credentials: { email: string; password: string } | undefined;
+  };
+
+  if (!issues) {
+    return res.status(400).json({ error: "Missing params" });
+  }
+  if (!credentials || !credentials.email || !credentials.password) {
+    return res.status(403).json({ error: "Missing credentials" });
+  }
+
+  try {
+    const { browser, page } = await startBrowser();
+    const taskId = randomUUID();
+
+    console.log(issues);
+
+    createTaskStatus(taskId, "Contestando produtos");
+
+    loginController(credentials, page, taskId).then(() => {
+      contestController(issues, page, taskId).then(() => {
+        browser.close();
+      });
+    });
+
+    res.status(200).send({ taskId });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: "Erro interno no servidor",
+    });
+  }
+});
 
 function isValidProducts(products: any) {
   if (!products) throw new Error("Missing products");
@@ -85,6 +122,8 @@ function isValidProducts(products: any) {
 app.post("/ranking", async (req, res) => {
   try {
     const { products } = req.body;
+    isValidProducts(products);
+
     const { browser, page } = await startBrowser();
     const taskId = randomUUID();
 
