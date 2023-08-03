@@ -21,9 +21,14 @@ export async function contestController(
       progress: (currentIndex / data.length) * 100,
     });
     const url = getItemURL(item.subAccountId, item.sku);
+
     await page.goto(url);
-    await page.waitForNetworkIdle();
-    await contest(page, item.issue);
+    try {
+      await contest(page, item.issue);
+    } catch (err) {
+      console.log(err);
+      console.log(item);
+    }
   }
 
   updateTaskStatus(taskId, {
@@ -32,19 +37,25 @@ export async function contestController(
 }
 
 function getItemURL(subAccountId: string, sku: string) {
-  return `https://merchants.google.com/mc/items/details?a=${subAccountId}6&offerId=${sku}&language=pt&channel=0&feedLabel=BR&hl=pt`;
+  return `https://merchants.google.com/mc/items/details?a=${subAccountId}&offerId=${sku}&language=pt&channel=0&feedLabel=BR&hl=pt`;
 }
 
 async function contest(page: Page, issue: IssueType): Promise<void> {
+  // Primeiro botão "Pedir análise"
+  await page.waitForSelector(".mcn-button-touch-target", {
+    timeout: 5000,
+  });
+
   await page.evaluate(async () => {
-    // Primeiro botão "Pedir análise"
     const button = document.querySelector(
       ".mcn-button-touch-target"
     ) as HTMLElement;
     button.click();
+  });
 
-    if (issue === "Documentos falsificados") {
-      // Caso seja popup de múltipla escolha
+  // Caso seja popup de múltipla escolha
+  if (issue === "Documentos falsificados") {
+    await page.evaluate(async () => {
       const options = Array.from(
         document.querySelector("material-radio-group")
           ?.children as HTMLCollection
@@ -53,17 +64,17 @@ async function contest(page: Page, issue: IssueType): Promise<void> {
         el.textContent?.includes("Meu produto cumpre os requisitos da política")
       ) as HTMLElement;
       btn?.click();
-    }
-
-    await page.evaluate(() => {
-      // Segundo botão "Pedir análise" (confirmação)
-      const popupButtons = document
-        .querySelector("material-dialog")
-        ?.querySelectorAll("span") as NodeListOf<HTMLSpanElement>;
-      const btn = Array.from(popupButtons).find((btn) =>
-        btn.textContent?.includes("Pedir análise")
-      );
-      btn?.click();
     });
+  }
+
+  // Segundo botão "Pedir análise" (confirmação)
+  await page.evaluate(() => {
+    const popupButtons = document
+      .querySelector("material-dialog")
+      ?.querySelectorAll("span") as NodeListOf<HTMLSpanElement>;
+    const btn = Array.from(popupButtons).find((btn) =>
+      btn.textContent?.includes("Pedir análise")
+    );
+    btn?.click();
   });
 }
