@@ -15,11 +15,12 @@ type ProgressData = {
 
 type Result = {
   name: string;
-  postition: number; // -1 | <1
+  position: number; // -1 | <1
 };
 
 type TaskStatus = {
   createdAt: Date;
+  lastUpdate: Date;
   status: "pending" | "error" | "finished";
   message: string;
   progress: number;
@@ -30,6 +31,7 @@ const issues = [
   "Medicamentos controlados e vendidos sem receita",
   "Produtos farmacêuticos e suplementos proibidos",
   "Documentos falsificados",
+  "Interesses sexuais na publicidade personalizada",
 ] as const;
 
 type IssueType = (typeof issues)[number];
